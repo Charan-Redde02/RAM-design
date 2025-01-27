@@ -1,0 +1,59 @@
+`timescale 1ns / 1ps
+
+module tb_ram_sp;
+
+    // Parameters
+    localparam int DATA_WIDTH = 8;
+    localparam int ADDR_WIDTH = 4;
+
+    // Signals
+    logic clk;
+    logic we;
+    logic [ADDR_WIDTH-1:0] addr;
+    logic [DATA_WIDTH-1:0] data_in;
+    logic [DATA_WIDTH-1:0] data_out;
+
+    // Instantiate the RAM module
+    ram_sp #(
+        .DATA_WIDTH(DATA_WIDTH),
+        .ADDR_WIDTH(ADDR_WIDTH)
+    ) uut (
+        .clk(clk),
+        .we(we),
+        .addr(addr),
+        .data_in(data_in),
+        .data_out(data_out)
+    );
+
+    // Clock generation
+    always #5 clk = ~clk; // 10ns clock period
+
+    initial begin
+        // Initialize signals
+        clk = 0;
+        we = 0;
+        addr = 0;
+        data_in = 0;
+
+        // Dump file setup for waveform
+        $dumpfile("dump.vcd");
+        $dumpvars(1, tb_ram_sp); // Dump top-level and hierarchical signals
+
+        // Simulation sequence
+        #10 we = 1; addr = 4'h0; data_in = 8'hAA; // Write 0xAA to address 0
+        #10 we = 0; addr = 4'h0;                 // Read from address 0
+        #10 we = 1; addr = 4'h1; data_in = 8'h55; // Write 0x55 to address 1
+        #10 we = 0; addr = 4'h1;                 // Read from address 1
+        #10 we = 1; addr = 4'h2; data_in = 8'hFF; // Write 0xFF to address 2
+        #10 we = 0; addr = 4'h2;                 // Read from address 2
+
+        #20 $finish; // End the simulation
+    end
+
+    // Monitor signals for debugging
+    initial begin
+        $monitor("Time=%0t | CLK=%b | WE=%b | ADDR=%h | DATA_IN=%h | DATA_OUT=%h", 
+                  $time, clk, we, addr, data_in, data_out);
+    end
+
+endmodule
